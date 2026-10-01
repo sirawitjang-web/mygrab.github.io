@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสรุปยอดและคำนวณรอบวิ่งรถ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --input-bg: #0f172a;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-gold: #f59e0b;
+            --radius: 14px;
+
+            /* สีเฉพาะสำหรับแต่ละส่วน */
+            --color-info: #3b82f6;
+            --bg-info: rgba(59, 130, 246, 0.08);
+            --border-info: rgba(59, 130, 246, 0.3);
+
+            --color-income: #10b981;
+            --bg-income: rgba(16, 185, 129, 0.08);
+            --border-income: rgba(16, 185, 129, 0.3);
+
+            --color-expense: #f97316;
+            --bg-expense: rgba(249, 115, 22, 0.08);
+            --border-expense: rgba(249, 115, 22, 0.3);
+
+            --color-mileage: #a855f7;
+            --bg-mileage: rgba(168, 85, 247, 0.08);
+            --border-mileage: rgba(168, 85, 247, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Kanit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 24px 12px;
+        }
+
+        form {
+            background-color: var(--card-bg);
+            padding: 24px;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 480px;
+            border: 1px solid var(--border-color);
+        }
+
+        .header-box {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px dashed var(--border-color);
+        }
+
+        .header-box h2 {
+            font-size: 1.5rem;
+            color: #38bdf8;
+            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .header-box p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        /* ตกแต่ง Card แต่ละประเภท */
+        .section-card {
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 18px;
+            border: 1px solid;
+            transition: transform 0.2s ease;
+        }
+
+        .section-card.info {
+            background-color: var(--bg-info);
+            border-color: var(--border-info);
+        }
+        .section-card.info h3 { color: var(--color-info); }
+
+        .section-card.income {
+            background-color: var(--bg-income);
+            border-color: var(--border-income);
+        }
+        .section-card.income h3 { color: var(--color-income); }
+
+        .section-card.expense {
+            background-color: var(--bg-expense);
+            border-color: var(--border-expense);
+        }
+        .section-card.expense h3 { color: var(--color-expense); }
+
+        .section-card.mileage {
+            background-color: var(--bg-mileage);
+            border-color: var(--border-mileage);
+        }
+        .section-card.mileage h3 { color: var(--color-mileage); }
+
+        .section-card h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            font-size: 0.92rem;
+            color: var(--text-main);
+            font-weight: 400;
+        }
+
+        /* ตกแต่ง Input ให้เข้ากับสีของ Card */
+        input {
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background-color: var(--input-bg);
+            color: #ffffff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s ease;
+            width: 58%;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        input[type="date"], input[type="text"] {
+            text-align: left;
+        }
+
+        .info input:focus {
+            border-color: var(--color-info);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .income input:focus {
+            border-color: var(--color-income);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+        }
+        .expense input:focus {
+            border-color: var(--color-expense);
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25);
+        }
+        .mileage input:focus {
+            border-color: var(--color-mileage);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+        }
+
+        .sub-header {
+            font-size: 0.85rem;
+            color: var(--accent-gold);
+            margin: 12px 0 8px 0;
+            padding-top: 10px;
+            border-top: 1px rgba(255, 255, 255, 0.1) solid;
+            font-weight: 500;
+        }
+
+        .note-text {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 50%;
+            transition: all 0.2s ease;
+        }
+
+        #calculateButton {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        #calculateButton:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+        }
+
+        #resetButton {
+            background-color: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        #resetButton:hover {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        #imageOutput {
+            display: none;
+            margin-top: 24px;
+            text-align: center;
+            border-top: 2px dashed var(--border-color);
+            padding-top: 20px;
+        }
+
+        #canvasOutput {
+            border-radius: 14px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+        }
+
+        #copyButton {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            margin-top: 14px;
+            width: 100%;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        #copyButton:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        }
+
+        .highlight-box {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <form id="sumForm">
+        <div class="header-box">
+            <h2>🚗 ระบบสรุปยอดวิ่งรถ</h2>
+            <p>คำนวณรายรับ-รายจ่าย แบ่งยอดโอน และสรุปรูปภาพ</p>
+        </div>
+
+        <!-- ข้อมูลส่วนตัว & วันที่ (สีฟ้า) -->
+        <div class="section-card info">
+            <h3>👤 ข้อมูลการวิ่งรถ</h3>
+            <div class="input-group">
+                <label for="selectedDate">ยอดวันที่:</label>
+                <input type="date" id="selectedDate" onchange="updateDate()">
+            </div>
+            <div class="input-group">
+                <label for="driverName">ชื่อคนขับ:</label>
+                <input type="text" id="driverName" placeholder="เช่น นายสมชาย" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="carModel">ยี่ห้อ/รุ่นรถ:</label>
+                <input type="text" id="carModel" placeholder="เช่น MG EP / BYD Dolphin" oninput="resetCalculation()">
+            </div>
+        </div>
+
+        <!-- รายรับ (สีเขียว) -->
+        <div class="section-card income">
+            <h3>💵 รายรับ (บาท)</h3>
+            <div class="input-group">
+                <label for="grab">GRAB</label>
+                <input type="number" id="grab" placeholder="0.00" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="bolt">BOLT</label>
+                <input type="number" id="bolt" placeholder="0.00" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="indriver">INDRIVER</label>
+                <input type="number" id="indriver" placeholder="0.00" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="maxim">MAXIM</label>
+                <input type="number" id="maxim" placeholder="0.00" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="lineman">LINEMAN</label>
+                <input type="number" id="lineman" placeholder="0.00" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="others">งานนอก</label>
+                <input type="number" id="others" placeholder="0.00" oninput="resetCalculation()">
+            </div>
+        </div>
+
+        <!-- รายจ่าย (สีส้ม) -->
+        <div class="section-card expense">
+            <h3>⛽ รายจ่าย (บาท)</h3>
+            <div class="input-group">
+                <label for="electricity">ค่าไฟ / น้ำมัน</label>
+                <input type="number" id="electricity" placeholder="0.00" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="otherExpenses">รายจ่ายอื่นๆ</label>
+                <input type="number" id="otherExpenses" placeholder="0.00" oninput="resetCalculation()">
+            </div>
+        </div>
+
+        <!-- เลขไมล์รถ (สีม่วง) -->
+        <div class="section-card mileage">
+            <h3>📍 เลขไมล์ (กม.)</h3>
+            <div class="sub-header">☀️ ขับกะเช้า (ไม่ข้ามวัน)</div>
+            <div class="input-group">
+                <label for="startday1">เริ่มงาน</label>
+                <input type="number" id="startday1" placeholder="ไมล์เริ่ม" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="endday1">จบงาน</label>
+                <input type="number" id="endday1" placeholder="ไมล์จบ" oninput="resetCalculation()">
+            </div>
+
+            <div class="sub-header">🌙 ขับกะกลางคืน (ขับข้ามวัน)</div>
+            <div class="note-text">ใส่อยอดตั้งแต่เที่ยงคืนเมื่อวาน - เที่ยงคืนวันนี้<br>ยอดหลังเที่ยงคืนคิดในวันถัดไป (เช่น 0.00-8.00น. และ 20.00-24.00น.)</div>
+            <div class="input-group">
+                <label for="startnight1">เมื่อวาน 0.00 น.</label>
+                <input type="number" id="startnight1" placeholder="ช่วงที่ 1 เริ่ม" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="endnight1">จบงานตอนเช้า</label>
+                <input type="number" id="endnight1" placeholder="ช่วงที่ 1 จบ" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="startnight2">เริ่มงานตอนเย็น</label>
+                <input type="number" id="startnight2" placeholder="ช่วงที่ 2 เริ่ม" oninput="resetCalculation()">
+            </div>
+            <div class="input-group">
+                <label for="endnight2">เมื่อวาน 24.00 น.</label>
+                <input type="number" id="endnight2" placeholder="ช่วงที่ 2 จบ" oninput="resetCalculation()">
+            </div>
+        </div>
+
+        <!-- ซ่อนองค์ประกอบสำหรับคำนวณภายใน -->
+        <div class="highlight-box" id="calculationBox">
+            <div id="calculationDetails"></div>
+            <div id="totalSum"></div>
+            <div id="distanceUsed"></div>
+            <div id="ratePerKm"></div>
+        </div>
+
+        <div class="button-container">
+            <button type="button" id="resetButton" onclick="confirmReset()">ล้างข้อมูล</button>
+            <button type="button" id="calculateButton" onclick="calculateAndShow()">คำนวณยอด</button>
+        </div>
+
+        <!-- ผลลัพธ์รูปภาพ Canvas -->
+        <div id="imageOutput">
+            <h3 style="margin-bottom: 12px; color: var(--color-income);">🖼️ สรุปผลเรียบร้อย</h3>
+            <canvas id="canvasOutput" width="400" height="300"></canvas>
+            <button type="button" id="copyButton" onclick="saveImage()">📥 บันทึกรูปภาพ</button>
+        </div>
+    </form>
+
+    <script>
+        let isCalculated = false;
+        let lastSelectedDate = "";
+
+        function updateDate() {
+            lastSelectedDate = document.getElementById('selectedDate').value;
+            if (isCalculated) {
+                generateImage();
+            }
+        }
+
+        function calculateAndShow() {
+            calculateSum();
+            generateImage();
+            document.getElementById('imageOutput').style.display = 'block';
+            isCalculated = true;
+            
+            if (window.updateInterval) {
+                clearInterval(window.updateInterval);
+            }
+            window.updateInterval = setInterval(() => {
+                if (isCalculated) {
+                    generateImage();
+                }
+            }, 1000);
+        }
+
+        function calculateSum() {
+            let grab = parseFloat(document.getElementById('grab').value) || 0;
+            let bolt = parseFloat(document.getElementById('bolt').value) || 0;
+            let indriver = parseFloat(document.getElementById('indriver').value) || 0;
+            let maxim = parseFloat(document.getElementById('maxim').value) || 0;
+            let lineman = parseFloat(document.getElementById('lineman').value) || 0;
+            let others = parseFloat(document.getElementById('others').value) || 0;
+            
+            let electricity = parseFloat(document.getElementById('electricity').value) || 0;
+            let otherExpenses = parseFloat(document.getElementById('otherExpenses').value) || 0;
+
+            let incomeSum = grab + bolt + indriver + maxim + others + lineman;
+            let maintenanceFee = incomeSum * 0.1;
+            
+            let totalExpenses = electricity + otherExpenses;
+            let netIncomeAfterMaintenance = incomeSum - maintenanceFee;
+            let remainingForSplit = netIncomeAfterMaintenance - totalExpenses;
+            let driverHalfShare = remainingForSplit / 2;
+            let totalToTransfer = driverHalfShare + maintenanceFee;
+
+            let calculationText = '';
+            if (grab > 0) calculationText += `GRAB: ${grab.toLocaleString()} บาท\n`;
+            if (bolt > 0) calculationText += `BOLT: ${bolt.toLocaleString()} บาท\n`;
+            if (indriver > 0) calculationText += `INDRIVER: ${indriver.toLocaleString()} บาท\n`;
+            if (maxim > 0) calculationText += `MAXIM: ${maxim.toLocaleString()} บาท\n`;
+            if (lineman > 0) calculationText += `LINEMAN: ${lineman.toLocaleString()} บาท\n`;
+            if (others > 0) calculationText += `งานนอก: ${others.toLocaleString()} บาท\n`;
+            
+            calculationText += `---------------------------------\n`;
+            calculationText += `รวมยอดรายรับ = ${incomeSum.toFixed(2)} บาท\n`;
+            calculationText += `ค่าบำรุงรถ (10%) = ${maintenanceFee.toFixed(2)} บาท\n`;
+            calculationText += `ค่าไฟ/น้ำมัน = ${electricity.toFixed(2)} บาท\n`;
+            calculationText += `รายจ่ายอื่นๆ = ${otherExpenses.toFixed(2)} บาท\n`;
+            calculationText += `รวมรายจ่ายทั้งหมด = ${(maintenanceFee + totalExpenses).toFixed(2)} บาท\n`;
+            calculationText += `ยอดส่วนแบ่งคนขับ (หารครึ่ง) = ${driverHalfShare.toFixed(2)} บาท\n`;
+
+            let startday1 = parseFloat(document.getElementById('startday1').value) || 0;
+            let endday1 = parseFloat(document.getElementById('endday1').value) || 0;
+            let startnight1 = parseFloat(document.getElementById('startnight1').value) || 0;
+            let endnight1 = parseFloat(document.getElementById('endnight1').value) || 0;
+            let startnight2 = parseFloat(document.getElementById('startnight2').value) || 0;
+            let endnight2 = parseFloat(document.getElementById('endnight2').value) || 0;
+
+            let distance1 = (startday1 > 0 || endday1 > 0) ? Math.abs(endday1 - startday1) : 0;
+            let distance2 = (startnight1 > 0 || endnight1 > 0) ? Math.abs(endnight1 - startnight1) : 0;
+            let distance3 = (startnight2 > 0 || endnight2 > 0) ? Math.abs(endnight2 - startnight2) : 0;
+            let totalDistance = distance1 + distance2 + distance3;
+
+            if (distance1 > 0) calculationText += `ระยะทางกะเช้า : ${distance1} KM\n`;
+            if (distance2 > 0) calculationText += `ระยะทางกะดึก #1 : ${distance2} KM\n`;
+            if (distance3 > 0) calculationText += `ระยะทางกะดึก #2 : ${distance3} KM\n`;
+
+            let ratePerKm = totalDistance > 0 ? (incomeSum / totalDistance).toFixed(2) : "0.00";
+
+            document.getElementById('calculationDetails').textContent = calculationText;
+            document.getElementById('totalSum').textContent = `รวมยอดที่ต้องโอน: ${totalToTransfer.toFixed(2)} บาท`;
+            document.getElementById('distanceUsed').textContent = `ระยะทางรวม: ${totalDistance} กม.`;
+            document.getElementById('ratePerKm').textContent = `เฉลี่ย: ${ratePerKm} บาท/กม.`;
+        }
+
+        function resetCalculation() {
+            document.getElementById('calculationBox').style.display = 'none';
+            document.getElementById('imageOutput').style.display = 'none';
+            isCalculated = false;
+            if (window.updateInterval) {
+                clearInterval(window.updateInterval);
+            }
+        }
+
+        function confirmReset() {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลทั้งหมด?")) {
+                document.getElementById('sumForm').reset();
+                resetCalculation();
+                window.onload();
+            }
+        }
+
+        function generateImage() {
+            const canvas = document.getElementById('canvasOutput');
+            const ctx = canvas.getContext('2d');
+
+            const scaleFactor = 2;
+            const baseWidth = 420; 
+            const baseHeight = 320; 
+            const leftPadding = 30; 
+
+            const driverName = document.getElementById('driverName').value.trim() || "-";
+            const carModel = document.getElementById('carModel').value.trim() || "-";
+
+            const details = document.getElementById('calculationDetails').textContent;
+            const totalSum = document.getElementById('totalSum').textContent;
+            const distanceUsed = document.getElementById('distanceUsed').textContent;
+            const ratePerKm = document.getElementById('ratePerKm').textContent;
+
+            const detailsLines = details.split('\n').filter(line => line.trim() !== '');
+            const summaryLines = [totalSum, distanceUsed, ratePerKm];
+
+            const detailsFont = '13px "Kanit", sans-serif';
+            const lineHeight = 20; 
+            const summaryLineHeight = 32; 
+
+            let contentHeight = 120; 
+            contentHeight += detailsLines.length * lineHeight;
+            contentHeight += summaryLines.length * summaryLineHeight + 40; 
+
+            let totalHeight = Math.max(contentHeight, baseHeight); 
+
+            canvas.width = baseWidth * scaleFactor;
+            canvas.height = totalHeight * scaleFactor;
+            canvas.style.width = `${baseWidth}px`;
+            canvas.style.height = `${totalHeight}px`;
+            ctx.scale(scaleFactor, scaleFactor);
+
+            // พื้นหลัง Canvas
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, baseWidth, totalHeight);
+
+            // แถบหัวเรื่องสีเขียวเข้มสดใส
+            ctx.fillStyle = '#059669';
+            ctx.fillRect(0, 0, baseWidth, 60);
+
+            // หัวข้อในแถบ
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 18px "Kanit", sans-serif';
+            ctx.fillText(`สรุปยอดวิ่งรถประจำวัน`, leftPadding, 38);
+
+            // วันที่มุมขวาบน
+            ctx.font = '14px "Kanit", sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${lastSelectedDate}`, baseWidth - leftPadding, 38);
+            ctx.textAlign = 'left';
+
+            // ข้อมูลคนขับ และ รุ่นรถ
+            let y = 85;
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '13px "Kanit", sans-serif';
+            ctx.fillText(`คนขับ:`, leftPadding, y);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px "Kanit", sans-serif';
+            ctx.fillText(driverName, leftPadding + 45, y);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '13px "Kanit", sans-serif';
+            ctx.fillText(`รถยนต์:`, baseWidth / 2, y);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 13px "Kanit", sans-serif';
+            ctx.fillText(carModel, (baseWidth / 2) + 50, y);
+
+            // เส้นแบ่ง
+            y += 15;
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(leftPadding, y);
+            ctx.lineTo(baseWidth - leftPadding, y);
+            ctx.stroke();
+
+            // รายละเอียด
+            y += 22;
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = detailsFont;
+            detailsLines.forEach((line) => {
+                if (line.includes('---')) {
+                    ctx.strokeStyle = '#334155';
+                    ctx.beginPath();
+                    ctx.moveTo(leftPadding, y - 5);
+                    ctx.lineTo(baseWidth - leftPadding, y - 5);
+                    ctx.stroke();
+                } else {
+                    ctx.fillText(line, leftPadding, y);
+                    y += lineHeight;
+                }
+            });
+
+            // กล่องสรุปยอดสีเข้ม
+            y += 10;
+            ctx.fillStyle = '#1e293b';
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 10;
+            ctx.fillRect(leftPadding - 10, y, baseWidth - (leftPadding * 2) + 20, (summaryLines.length * summaryLineHeight) + 15);
+            ctx.shadowBlur = 0;
+
+            y += 30;
+            // ข้อความสรุป
+            summaryLines.forEach((line, index) => {
+                if (index === 0) {
+                    ctx.fillStyle = '#f59e0b'; // สีทองสว่างสำหรับยอดเงิน
+                    ctx.font = 'bold 18px "Kanit", sans-serif';
+                } else {
+                    ctx.fillStyle = '#10b981'; // สีเขียวสว่างสำหรับระยะทาง
+                    ctx.font = 'bold 14px "Kanit", sans-serif';
+                }
+                ctx.fillText(line, leftPadding, y);
+                y += summaryLineHeight;
+            });
+
+            // เวลาอัปเดตล่างสุด
+            const now = new Date();
+            const thaiDate = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+            const thaiTime = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            
+            ctx.fillStyle = '#64748b';
+            ctx.font = '11px "Kanit", sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`อัปเดตเมื่อ: ${thaiDate} ${thaiTime} น.`, baseWidth - leftPadding, totalHeight - 15);
+            ctx.textAlign = 'left';
+        }
+
+        function saveImage() {
+            const canvas = document.getElementById('canvasOutput');
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `สรุปยอด-${lastSelectedDate}.png`;
+            link.href = dataURL;
+            link.click();
+        }
+
+        window.onload = function() {
+            const dateInput = document.getElementById('selectedDate');
+            const now = new Date();
+            const timezoneOffset = now.getTimezoneOffset() * 60000; 
+            const localDate = new Date(now - timezoneOffset);
+            
+            const today = localDate.toISOString().split('T')[0];
+            dateInput.value = today;
+            lastSelectedDate = today;
+        };
+    </script>
+</body>
+</html>
